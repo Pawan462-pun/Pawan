@@ -1,0 +1,129 @@
+
+    const users = [
+      { userId: "student1", password: "1234" },
+      { userId: "student2", password: "abcd" },
+      { userId: "student3", password: "4321" }
+    ];
+
+    const questions = [
+      {
+        q: "Honours me pehla subject kaun sa hota hai?",
+        options: ["Math", "Physics", "Chemistry", "English"],
+        answer: "English"
+      },
+      {
+        q: "HTML ka use kis liye hota hai?",
+        options: ["Design", "Structure", "Programming", "None"],
+        answer: "Structure"
+      },
+      {
+        q: "JavaScript kis type ki language hai?",
+        options: ["Compiled", "Scripting", "Markup", "None"],
+        answer: "Scripting"
+      }
+    ];
+
+    let timeLeft = 60;
+    let timer;
+    let currentUser = null;
+    const scoreBoard = {};
+
+    function togglePassword() {
+      const pass = document.getElementById("password");
+      pass.type = pass.type === "password" ? "text" : "password";
+    }
+
+    function login() {
+      const user = document.getElementById('userId').value.trim();
+      const pass = document.getElementById('password').value.trim();
+      const loginError = document.getElementById('loginError');
+
+      const found = users.find(u => u.userId === user && u.password === pass);
+      if (found) {
+        currentUser = user;
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('examSection').style.display = 'block';
+        document.getElementById('result').innerHTML = '';
+        renderQuestions();
+        startTimer();
+      } else {
+        loginError.textContent = "Invalid User ID or Password";
+      }
+    }
+
+    function renderQuestions() {
+      const container = document.getElementById("questionsContainer");
+      container.innerHTML = "";
+      questions.forEach((q, i) => {
+        const div = document.createElement("div");
+        div.classList.add("question");
+        div.innerHTML = `
+          <p>${i + 1}. ${q.q}</p>
+          <div class="options">
+            ${q.options.map(opt => `
+              <label>
+                <input type="radio" name="q${i}" value="${opt}"/> ${opt}
+              </label>
+            `).join('')}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function startTimer() {
+      timeLeft = 60;
+      const timerDisplay = document.getElementById('timer');
+      timer = setInterval(() => {
+        timeLeft--;
+        const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+        const s = String(timeLeft % 60).padStart(2, '0');
+        timerDisplay.textContent = `Time: ${m}:${s}`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          submitExam();
+        }
+      }, 1000);
+    }
+
+    function submitExam() {
+      clearInterval(timer);
+      let score = 0;
+      questions.forEach((q, i) => {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if (selected && selected.value === q.answer) {
+          score++;
+        }
+      });
+      const percentage = ((score / questions.length) * 100).toFixed(2);
+      scoreBoard[currentUser] = { score, percentage };
+      document.getElementById("examSection").style.display = "none";
+      document.getElementById("result").innerHTML = `
+        <div>Student: <b>${currentUser}</b></div>
+        <div>Score: ${score}/${questions.length} (${percentage}%)</div>
+        <button onclick="nextStudent()">Next Student</button>
+      `;
+    }
+
+    function nextStudent() {
+      document.getElementById("loginSection").style.display = "block";
+      document.getElementById("userId").value = "";
+      document.getElementById("password").value = "";
+      document.getElementById("loginError").textContent = "";
+      document.getElementById("result").innerHTML = "";
+      currentUser = null;
+    }
+
+    function checkScore() {
+      const id = document.getElementById("searchId").value.trim();
+      const result = document.getElementById("searchResult");
+
+      if (scoreBoard[id]) {
+        result.textContent = `Student: ${id} | Score: ${scoreBoard[id].score}/${questions.length} (${scoreBoard[id].percentage}%)`;
+        result.style.color = "green";
+      } else {
+        result.textContent = "No score found for this ID.";
+        result.style.color = "red";
+      }
+    }
+  
